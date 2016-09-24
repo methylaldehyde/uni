@@ -75,9 +75,8 @@ class Color {
 }
 
 class Solve {
-    // Parallel-move a polygon, picking lowest vertex as
-    // a reference.
-    public static Polygon parallelLowest(Polygon s) {
+    // Finds leftmost lowest vertex in a polygon
+    public static Vertex findLowest(Polygon s) {
 	Vertex v_min = new Vertex(s.vertices[0].x, s.vertices[0].y);
 	for (Vertex l : s.vertices) {
 	    if (v_min.y > l.y) {
@@ -92,6 +91,49 @@ class Solve {
 		}
 	    }
 	}
+	return v_min;
+    }
+	
+    // Parallel-move a point based on given vertex's coordinates
+    // (ugly-ugly)
+    public static Point parallelPointByVertex(Point p, Vertex moveBy) {
+	//maybe slightly less bs??
+	Point result = new Point(p.x, p.y);
+	result.x = result.x - moveBy.x;
+	result.y = result.y - moveBy.y;
+	return result;
+    }
+
+    public static Polygon boundingBox(Polygon s) {
+	double leftX = s.vertices[0].x;
+	double rightX = s.vertices[0].x;
+	double topY = s.vertices[0].y;
+	double bottomY = s.vertices[0].y;
+	for (Vertex l : s.vertices) {
+	    if (leftX > l.x) {
+		leftX = l.x;
+	    }
+	    if (rightX < l.x) {
+		rightX = l.x;
+	    }
+	    if (topY < l.y) {
+		topY = l.y;
+	    }   
+	    if (bottomY > l.y) {
+		bottomY = l.y;
+	    }
+	}
+	// Polygon r = new Polygon(new Vertex[] {vA, vB, vC, vD});
+	return new Polygon(new Vertex[] {new Vertex(leftX, topY),
+					 new Vertex(rightX, topY),
+					 new Vertex(rightX, bottomY),
+					 new Vertex(leftX, bottomY)});
+    }
+
+    // Parallel-move a polygon, picking lowest vertex as
+    // a reference.
+    public static Polygon parallelLowest(Polygon s) {
+	Vertex v_min = findLowest(s);
 	Polygon result = s.mkCopy();
 	for (Vertex m : result.vertices) {
 	    m.x = m.x - v_min.x;
@@ -183,10 +225,14 @@ public class Main {
     public static void main(String[] args) {
 	// An example of a rectangle:
 	Vertex vA = new Vertex((10.0), (2.0));
+	Vertex vA1 = new Vertex(-(vA.x), -(vA.y));
 	Vertex vB = new Vertex((15.0), (2.0));
 	Vertex vC = new Vertex((15.0), (-4.0));
 	Vertex vD = new Vertex((10.0), (-4.0));
 	Polygon r = new Polygon(new Vertex[] {vA, vB, vC, vD});
+	Polygon t = new Polygon(new Vertex[] {vA, vB, vC});
+	Point p = new Point(6.6, -3.3);
+	// Test PiP for rectangles
 	System.out.println("Working with polygon:");
 	System.out.println(r.mkString());
 	if (Solve.rectangle(r, new Point((0.0), (0.0)))) {
@@ -198,9 +244,31 @@ public class Main {
 	if (Solve.rectangle(r, new Point((13.37), (-2.3)))) {
 	    System.out.println("We're in.");
 	}
+	// Test parallel transitions
 	System.out.println("Parallel transition of the polygon:");
 	System.out.println(Solve.parallelLowest(r).mkString());
 	System.out.println("Make sure that the initial polygon is untouched:");
+	System.out.println(r.mkString());
+	System.out.println("Working with point:");
+	System.out.println("(" + Double.toString(p.x) + ", " + Double.toString(p.y) + ")");
+	System.out.println("Using the following vertices for transformation:");
+	System.out.println("(" + Double.toString(vA.x) + ", " + Double.toString(vA.y) + ")");
+	System.out.println("(" + Double.toString(vA1.x) + ", " + Double.toString(vA1.y) + ")");
+	System.out.println("Parallel transition of a point:");
+	Point p1 = Solve.parallelPointByVertex(p, vA);
+	System.out.println("(" + Double.toString(p1.x) + ", " + Double.toString(p1.y) + ")");
+	System.out.println("Make sure that we get back the initial point:");
+	Point p2 = Solve.parallelPointByVertex(p1, vA1);
+	System.out.println("(" + Double.toString(p2.x) + ", " + Double.toString(p2.y) + ")");
+	System.out.println("Make sure that the initial point is untouched:");
+	System.out.println("(" + Double.toString(p.x) + ", " + Double.toString(p.y) + ")");
+	//Test bounding boxes
+	System.out.println("* * *");
+	System.out.println("Find a bounding box of this triangle:");
+	System.out.println(t.mkString());
+	System.out.println("Bounding box:");
+	System.out.println(Solve.boundingBox(t).mkString());
+	System.out.println("Should be equal to the following rectangle:");
 	System.out.println(r.mkString());
     }
 }
